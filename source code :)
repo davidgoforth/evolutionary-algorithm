@@ -1,0 +1,76 @@
+import random
+
+def generate_population(size, length):
+    population = []
+    for _ in range(size):
+        individual = ''.join(random.choice('01') for _ in range(length))
+        population.append(individual)
+    return population
+
+def calculate_fitness(individual, target):
+    fitness = 0
+    for i in range(len(individual)):
+        if individual[i] == target[i]:
+            fitness += 1
+    return fitness
+
+def select_parents(population, target):
+    parents = []
+    for _ in range(2):
+        fitnesses = [calculate_fitness(individual, target) for individual in population]
+        total_fitness = sum(fitnesses)
+        probabilities = [fitness / total_fitness for fitness in fitnesses]
+        parent = random.choices(population, probabilities)[0]
+        parents.append(parent)
+    return parents
+
+def crossover(parents):
+    point = random.randint(1, len(parents[0]) - 1)
+    child1 = parents[0][:point] + parents[1][point:]
+    child2 = parents[1][:point] + parents[0][point:]
+    return child1, child2
+
+def mutate(individual, mutation_rate):
+    mutated = ''
+    for bit in individual:
+        if random.random() < mutation_rate:
+            mutated += '0' if bit == '1' else '1'
+        else:
+            mutated += bit
+    return mutated
+
+def evolve(population, target, mutation_rate):
+    new_population = []
+    while len(new_population) < len(population):
+        parents = select_parents(population, target)
+        offspring1, offspring2 = crossover(parents)
+        mutated1 = mutate(offspring1, mutation_rate)
+        mutated2 = mutate(offspring2, mutation_rate)
+        new_population.extend([mutated1, mutated2])
+    return new_population
+
+def main(target, population_size, chromosome_length, mutation_rate, max_generations):
+    population = generate_population(population_size, chromosome_length)
+    generation = 0
+    while generation < max_generations:
+        best_individual = max(population, key=lambda individual: calculate_fitness(individual, target))
+        if calculate_fitness(best_individual, target) == chromosome_length:
+            break
+        population = evolve(population, target, mutation_rate)
+        generation += 1
+
+    best_individual = max(population, key=lambda individual: calculate_fitness(individual, target))
+    if calculate_fitness(best_individual, target) == chromosome_length:
+        print("Target achieved!")
+    else:
+        print("Target not achieved.")
+
+    print("Best individual:", best_individual)
+
+if __name__ == "__main__":
+    target_string = "Hello, World!"
+    population_size = 100
+    chromosome_length = len(target_string)
+    mutation_rate = 0.01
+    max_generations = 1000
+    main(target_string, population_size, chromosome_length, mutation_rate, max_generations)
